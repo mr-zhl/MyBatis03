@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--包扫描-->
+    <!--<context:component-scan base-package="com.lanou"/>-->
+    <context:component-scan base-package="com.lanou.dao,com.lanou.service"/>
+
+    <!--导入properties文件-->
+    <context:property-placeholder location="jdbc.properties"/>
+
+    <!--配置数据库连接池-->
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+    <!--SqlSessionFactoryBean用于创建SqlSessionFactory-->
+    <bean id="SqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <!--设置MyBatis的配置文件路径(可选)-->
+        <!--<property name="configLocation" value="mybatis-config.xml"/>-->
+        <!--如果UserDao和UserDao.xml,在同一个路径下,可以自动识别,不在同一个路径系下,需要设置xml路径-->
+        <!--<property name="mapperLocations" value="classpath:com/lanou/dao/*.xml">-->
+        <!---->
+        <!--</property>-->
+
+        <!--相当于Mybatis的配置文件-->
+        <property name="configuration">
+            <bean class="org.apache.ibatis.session.Configuration">
+                <property name="logImpl" value="org.apache.ibatis.logging.log4j.Log4jImpl"/>
+                <property name="mapUnderscoreToCamelCase" value="true"/>
+            </bean>
+        </property>
+        <!--添加mybatis的分页插件pageHelper-->
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <!--pageHelper的参数-->
+                        <value>
+                            helperDialect=mysql
+                            reasonable=true
+                        </value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+
+    <!--<bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean">-->
+    <!--<property name="mapperInterface" value="com.lanou.dao.UserDao"/>-->
+    <!--<property name="sqlSessionFactory" ref="SqlSessionFactoryBean"/>-->
+    <!--</bean>-->
+
+    <!--扫描dao层接口-->
+    <bean class="tk.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.lanou.dao"/>
+    </bean>
+
+    <!--开启事务-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--aop,方法级别的-->
+    <!--开启事务注解-->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!--开启aop的注解-->
+    <aop:aspectj-autoproxy/>
+
+
+</beans>
